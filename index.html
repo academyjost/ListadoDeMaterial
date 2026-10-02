@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Gestión de Inventario y Materiales</title>
+  <!-- Google Fonts: Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="fondo.css">
+</head>
+<body>
+
+  <!-- ENCABEZADO Y BARRA PRINCIPAL -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-area">
+        <div class="brand-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+          </svg>
+        </div>
+        <div>
+          <h1 class="app-title">Control de Inventario</h1>
+          <p class="app-subtitle">Gestión inteligente de materiales y productos</p>
+        </div>
+      </div>
+
+      <!-- Resumen Estadístico Superior -->
+      <div class="header-stats">
+        <div class="stat-pill stat-blue">
+          <span class="stat-label">Total Materiales</span>
+          <span class="stat-value" id="stat-total-items">0</span>
+        </div>
+        <div class="stat-pill stat-blue-light">
+          <span class="stat-label">Unidades en Stock</span>
+          <span class="stat-value" id="stat-total-units">0</span>
+        </div>
+        <div class="stat-pill stat-green" id="pill-low-stock-trigger">
+          <span class="stat-label">Stock Bajo</span>
+          <span class="stat-value" id="stat-low-stock">0</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAVEGACIÓN POR NIVELES / BOTONES DE CUADROS (OPTIMIZADO PARA MÓVIL Y DESKTOP) -->
+  <nav class="navigation-bar">
+    <div class="nav-container">
+      <button class="nav-btn active" data-tab="all">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        <span>Vista General</span>
+      </button>
+
+      <button class="nav-btn" data-tab="cuadro-inventario">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+        <span>Inventario</span>
+      </button>
+
+      <button class="nav-btn" data-tab="cuadro-notificaciones">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+        <span>Alertas de Stock</span>
+        <span class="badge-count" id="badge-notifications">0</span>
+      </button>
+
+      <button class="nav-btn" data-tab="cuadro-gestion">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        <span>Agregar / Editar</span>
+      </button>
+
+      <button class="nav-btn" data-tab="cuadro-historial">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        <span>Historial</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="main-content">
+
+    <!-- BARRA DE BÚSQUEDA Y FILTROS RÁPIDOS -->
+    <section class="filter-section">
+      <div class="search-box">
+        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" id="search-input" placeholder="Buscar material por nombre o código..." autocomplete="off">
+        <button type="button" class="btn-clear-search" id="btn-clear-search" title="Limpiar búsqueda">&times;</button>
+      </div>
+
+      <div class="filter-controls">
+        <div class="select-wrapper">
+          <select id="category-filter">
+            <option value="ALL">Todas las Categorías</option>
+            <!-- Opciones cargadas dinámicamente -->
+          </select>
+        </div>
+
+        <div class="select-wrapper">
+          <select id="status-filter">
+            <option value="ALL">Todos los Estados</option>
+            <option value="LOW">Stock Bajo (Alerta)</option>
+            <option value="OK">Stock Normal / Óptimo</option>
+          </select>
+        </div>
+
+        <button id="btn-quick-add" class="btn btn-primary btn-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          <span>Nuevo Material</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- GRID DE CUADROS INTERACTIVOS ("CUADROS PARA APLASTAR") -->
+    <div class="dashboard-grid" id="dashboard-grid">
+
+      <!-- CUADRO 1: INVENTARIO RÁPIDO (SUMAR Y RESTAR STOCK) -->
+      <div class="card-box" id="box-inventario" data-box-id="cuadro-inventario">
+        <div class="card-header">
+          <div class="header-title">
+            <div class="card-icon icon-blue">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+            </div>
+            <div>
+              <h2>Control de Inventario</h2>
+              <p>Suma o resta existencias directamente con los botones (+ / -)</p>
+            </div>
+          </div>
+          <div class="card-actions">
+            <button class="btn-toggle-box" title="Minimizar / Maximizar este cuadro" data-target="inventario-body">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"></polyline></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="card-body" id="inventario-body">
+          <div class="inventory-cards-container" id="inventory-list">
+            <!-- Los items del inventario con botones + / - se inyectan dinámicamente -->
+          </div>
+          <div class="empty-state hidden" id="empty-inventory">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><line x1="3.27" y1="6.96" x2="12" y2="12.01"></line></svg>
+            <h3>No se encontraron materiales</h3>
+            <p>Intenta ajustar la búsqueda o agrega un nuevo material al sistema.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- CUADRO 2: NOTIFICACIONES DE STOCK BAJO -->
+      <div class="card-box" id="box-notificaciones" data-box-id="cuadro-notificaciones">
+        <div class="card-header header-alert">
+          <div class="header-title">
+            <div class="card-icon icon-alert">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            </div>
+            <div>
+              <h2>Alertas de Stock Bajo</h2>
+              <p>Productos que requieren reabastecimiento urgente</p>
+            </div>
+          </div>
+          <div class="card-actions">
+            <span class="badge-alert" id="notification-count-badge">0 Alertas</span>
+            <button class="btn-toggle-box" title="Minimizar / Maximizar" data-target="notificaciones-body">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"></polyline></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="card-body" id="notificaciones-body">
+          <div class="notifications-list" id="notifications-list">
+            <!-- Alertas dinámicas -->
+          </div>
+          <div class="empty-state hidden" id="empty-notifications">
+            <div class="icon-success-circle">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <h3>¡Todo el stock está en óptimas condiciones!</h3>
+            <p>No hay productos por debajo de su umbral mínimo de unidades.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- CUADRO 3: AGREGAR Y EDITAR MATERIALES -->
+      <div class="card-box" id="box-gestion" data-box-id="cuadro-gestion">
+        <div class="card-header">
+          <div class="header-title">
+            <div class="card-icon icon-green">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            </div>
+            <div>
+              <h2>Agregar y Editar Materiales</h2>
+              <p>Registra nuevos productos o modifica la lista existente</p>
+            </div>
+          </div>
+          <div class="card-actions">
+            <button class="btn-toggle-box" title="Minimizar / Maximizar" data-target="gestion-body">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"></polyline></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="card-body" id="gestion-body">
+
+          <!-- FORMULARIO DE AGREGAR PRODUCTO -->
+          <form id="form-add-material" class="material-form">
+            <h3 class="form-title">Registrar Nuevo Material</h3>
+            
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="input-nombre">Nombre del Material <span class="required">*</span></label>
+                <input type="text" id="input-nombre" placeholder="Ej: Cemento Gris 50kg" required autocomplete="off">
+              </div>
+
+              <div class="form-group">
+                <label for="input-categoria">Categoría <span class="required">*</span></label>
+                <div class="input-with-datalist">
+                  <input type="text" id="input-categoria" list="categories-list" placeholder="Ej: Construcción, Eléctrico..." required autocomplete="off">
+                  <datalist id="categories-list">
+                    <option value="Construcción">
+                    <option value="Electricidad">
+                    <option value="Plomería">
+                    <option value="Herramientas">
+                    <option value="Pinturas">
+                    <option value="Oficina">
+                    <option value="General">
+                  </datalist>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="input-unidad">Unidad de Medida</label>
+                <select id="input-unidad">
+                  <option value="Unidades">Unidades (u)</option>
+                  <option value="Cajas">Cajas</option>
+                  <option value="Paquetes">Paquetes</option>
+                  <option value="Metros">Metros (m)</option>
+                  <option value="Kg">Kilogramos (Kg)</option>
+                  <option value="Litros">Litros (L)</option>
+                  <option value="Rollos">Rollos</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="input-stock">Stock Inicial <span class="required">*</span></label>
+                <input type="number" id="input-stock" min="0" value="10" required>
+              </div>
+
+              <div class="form-group">
+                <label for="input-min-stock">Stock Mínimo (Alerta) <span class="required">*</span></label>
+                <input type="number" id="input-min-stock" min="0" value="5" required>
+              </div>
+
+              <div class="form-group">
+                <label for="input-location">Ubicación / Notas (Opcional)</label>
+                <input type="text" id="input-location" placeholder="Ej: Estante A-3, Almacén Central" autocomplete="off">
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="btn btn-secondary" id="btn-reset-form">Limpiar Formulario</button>
+              <button type="submit" class="btn btn-green btn-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span>Guardar Material</span>
+              </button>
+            </div>
+          </form>
+
+          <hr class="divider">
+
+          <!-- TABLA / LISTADO DE GESTIÓN (PARA CAMBIAR O BORRAR) -->
+          <div class="management-section">
+            <div class="section-header-sm">
+              <h3>Materiales Registrados (Modificar / Eliminar)</h3>
+              <span class="count-pill" id="mgmt-count">0 items</span>
+            </div>
+
+            <div class="table-responsive">
+              <table class="data-table" id="table-management">
+                <thead>
+                  <tr>
+                    <th>Material</th>
+                    <th>Categoría</th>
+                    <th>Stock Actual</th>
+                    <th>Mínimo</th>
+                    <th>Estado</th>
+                    <th class="text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-management">
+                  <!-- Filas dinámicas -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- CUADRO 4: HISTORIAL DE ACTIVIDAD -->
+      <div class="card-box" id="box-historial" data-box-id="cuadro-historial">
+        <div class="card-header">
+          <div class="header-title">
+            <div class="card-icon icon-blue">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            </div>
+            <div>
+              <h2>Historial de Movimientos</h2>
+              <p>Registro automático de cambios de stock, ediciones y adiciones</p>
+            </div>
+          </div>
+          <div class="card-actions">
+            <button class="btn btn-sm btn-outline-blue" id="btn-export-csv" title="Descargar como CSV">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              <span>Exportar</span>
+            </button>
+            <button class="btn-toggle-box" title="Minimizar / Maximizar" data-target="historial-body">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"></polyline></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="card-body" id="historial-body">
+          <ul class="history-list" id="history-log-list">
+            <!-- Entradas de historial dinámicas -->
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- MODAL DE EDICIÓN DE MATERIAL -->
+  <div class="modal-overlay hidden" id="modal-edit">
+    <div class="modal-container">
+      <div class="modal-header">
+        <div class="modal-title">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+          <h3>Editar Material</h3>
+        </div>
+        <button class="btn-close-modal" id="btn-close-edit-modal">&times;</button>
+      </div>
+
+      <form id="form-edit-material">
+        <input type="hidden" id="edit-id">
+
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="edit-nombre">Nombre del Material</label>
+            <input type="text" id="edit-nombre" required autocomplete="off">
+          </div>
+
+          <div class="form-group">
+            <label for="edit-categoria">Categoría</label>
+            <input type="text" id="edit-categoria" required autocomplete="off">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col-6">
+              <label for="edit-unidad">Unidad</label>
+              <select id="edit-unidad">
+                <option value="Unidades">Unidades (u)</option>
+                <option value="Cajas">Cajas</option>
+                <option value="Paquetes">Paquetes</option>
+                <option value="Metros">Metros (m)</option>
+                <option value="Kg">Kilogramos (Kg)</option>
+                <option value="Litros">Litros (L)</option>
+                <option value="Rollos">Rollos</option>
+              </select>
+            </div>
+            
+            <div class="form-group col-6">
+              <label for="edit-min-stock">Stock Mínimo Alerta</label>
+              <input type="number" id="edit-min-stock" min="0" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="edit-stock">Stock Actual</label>
+            <input type="number" id="edit-stock" min="0" required>
+          </div>
+
+          <div class="form-group">
+            <label for="edit-location">Ubicación / Notas</label>
+            <input type="text" id="edit-location" autocomplete="off">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btn-cancel-edit">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL DE CONFIRMACIÓN DE ELIMINACIÓN -->
+  <div class="modal-overlay hidden" id="modal-delete">
+    <div class="modal-container modal-sm">
+      <div class="modal-header header-alert">
+        <div class="modal-title">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          <h3>Eliminar Material</h3>
+        </div>
+        <button class="btn-close-modal" id="btn-close-delete-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>¿Estás seguro de que deseas eliminar este material permanentemente?</p>
+        <div class="delete-item-summary" id="delete-item-name">Nombre del producto</div>
+        <p class="text-subtle">Esta acción no se puede deshacer.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="btn-cancel-delete">Cancelar</button>
+        <button type="button" class="btn btn-danger" id="btn-confirm-delete">Sí, Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENEDOR DE NOTIFICACIONES EN PANTALLA (TOASTS) -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- SCRIPTS DEL SISTEMA -->
+  <script src="materiales.js"></script>
+  <script src="listado.js"></script>
+</body>
+</html>
